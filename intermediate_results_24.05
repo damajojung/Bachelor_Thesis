@@ -480,6 +480,8 @@ plot_func <- function(x){
   
   # End Prediction
   
+  ## Plots
+  
   # Outstanding and Paid together
   par(mfrow=c(2,5))
   for(i in 1:length(time)){
@@ -521,7 +523,7 @@ plot_func <- function(x){
 # End plot function
 
 
-freq_model(base_mod = 1, time_dep = 0, rand_eff_corr=0, block_diag_rand_eff = 0, Data = Data, plot = 1)
+freq_model(base_mod = 1, time_dep = 1, rand_eff_corr=0, block_diag_rand_eff = 0, Data = Data, plot = 1)
 
 
 ############################################## 
