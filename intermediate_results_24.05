@@ -6,6 +6,17 @@ library(ChainLadder)
 library(nlmeODE)
 library(nlme)
 library(R2OpenBUGS)
+library(data.table)
+library(StanHeaders)
+library(ggplot2)
+library(lattice)
+library(deSolve)
+library(remotes)
+library(devtools)
+library(RcppArmadillo)
+library(pkgbuild)
+library(tidyverse)
+library(readxl)
 
 
 # Current state 15.04
@@ -307,8 +318,9 @@ freq_model <- function(base_mod, time_dep, rand_eff_corr, block_diag_rand_eff, D
                        control=list(returnObject=TRUE,msVerbose=TRUE, msMaxIter=10000,pnlsMaxIter=10000,
                                     pnlsTol=0.4), ### tolerance for PNLS convergence
                        verbose=TRUE)
+    plot_func_signal <<- 1
     if (plot == T){
-      plot_func(x = nlmeModel)
+      plot_func(x = nlmeModel, y = plot_func_signal)
     }
     
   }
@@ -342,9 +354,12 @@ freq_model <- function(base_mod, time_dep, rand_eff_corr, block_diag_rand_eff, D
                                      msMaxIter=10000,pnlsMaxIter=10000,
                                      pnlsTol=0.4),
                         verbose=TRUE)
+    plot_func_signal <<- 2
+   
     
     if (plot == T){
-      plot_func(x = nlmeModel2)
+      print(plot_func_signal)
+      plot_func(x = nlmeModel2, y = plot_func_signal)
     }
   }
   
@@ -377,9 +392,10 @@ freq_model <- function(base_mod, time_dep, rand_eff_corr, block_diag_rand_eff, D
                                      msMaxIter=10000,pnlsMaxIter=10000,
                                      pnlsTol=0.4),
                         verbose=TRUE)
+    plot_func_signal <<- 3
     
     if (plot == T ){
-      plot_func(x = nlmeModel3)
+      plot_func(x = nlmeModel3, y = plot_func_signal)
     }
   }
   
@@ -412,8 +428,9 @@ freq_model <- function(base_mod, time_dep, rand_eff_corr, block_diag_rand_eff, D
                                      msMaxIter=10000,pnlsMaxIter=10000,
                                      pnlsTol=0.4),
                         verbose=TRUE)
+    plot_func_signal <<- 4
     if (plot == T){
-      plot_func(x = nlmeModel4)
+      plot_func(x = nlmeModel4, y = plot_func_signal)
     }
   }
 }
@@ -421,8 +438,10 @@ freq_model <- function(base_mod, time_dep, rand_eff_corr, block_diag_rand_eff, D
 
 # ------------ Plot Function
 
-plot_func <- function(x){
+plot_func <- function(x, y){
   model <- x
+  plot_func_signal = y
+  print(plot_func_signal)
   data <- model$fitted[,2]
   wk_tri1 <- cbind(rep(0, nrow(wk_tri1)), wk_tri1)
   wk_tri2 <- cbind(rep(0, nrow(wk_tri2)), wk_tri2)
@@ -446,12 +465,43 @@ plot_func <- function(x){
   
   # Start Prediction
   IndCoef <- coef(model)
-  p <- ReservingModel(rep(IndCoef[,1], each = 2*11),
-                      rep(IndCoef[,2], each = 2*11),
-                      rep(IndCoef[,3], each = 2*11),
-                      rep(IndCoef[,4], each = 2*11),
-                      Data_Full$t, Data_Full$Cohort, Data_Full$Type)
   
+  if (plot_func_signal == 1){
+    p <- ReservingModel(rep(IndCoef[,1], each = 2*11),
+                        rep(IndCoef[,2], each = 2*11),
+                        rep(IndCoef[,3], each = 2*11),
+                        rep(IndCoef[,4], each = 2*11),
+                        Data_Full$t, Data_Full$Cohort, Data_Full$Type)
+    
+  }
+  
+  if (plot_func_signal == 2){
+    p <- ReservingModel2(rep(IndCoef[,1], each = 2*11),
+                        rep(IndCoef[,2], each = 2*11),
+                        rep(IndCoef[,3], each = 2*11),
+                        rep(IndCoef[,4], each = 2*11),
+                        Data_Full$t, Data_Full$Cohort, Data_Full$Type)
+    
+  }
+  
+  if (plot_func_signal == 3){
+    p <- ReservingModel3(rep(IndCoef[,1], each = 2*11),
+                        rep(IndCoef[,2], each = 2*11),
+                        rep(IndCoef[,3], each = 2*11),
+                        rep(IndCoef[,4], each = 2*11),
+                        Data_Full$t, Data_Full$Cohort, Data_Full$Type)
+    
+  }
+  
+  if (plot_func_signal == 4){
+    p <- ReservingModel4(rep(IndCoef[,1], each = 2*11),
+                        rep(IndCoef[,2], each = 2*11),
+                        rep(IndCoef[,3], each = 2*11),
+                        rep(IndCoef[,4], each = 2*11),
+                        Data_Full$t, Data_Full$Cohort, Data_Full$Type)
+    
+  }
+ 
   title_time <- seq(from = 1988, to = 1997, by = 1)
   odd <- c(1,3,5,7,9,11,13,15,17,19,21)
   even <- c(2,4,6,8,10,12,14,16,18,20,22)
@@ -507,7 +557,7 @@ plot_func <- function(x){
     lines(pred_data_inc[i], col = "blue", lwd = 2)
   }
   
-  coefs <- nlmeModel$coefficients
+  coefs <- model$coefficients
   RLR <- exp(coefs$random$Cohort[,1])
   RRF <- exp(coefs$random$Cohort[,2])
   par(mfrow=c(1,2))
@@ -523,7 +573,7 @@ plot_func <- function(x){
 # End plot function
 
 
-freq_model(base_mod = 1, time_dep = 1, rand_eff_corr=0, block_diag_rand_eff = 0, Data = Data, plot = 1)
+freq_model(base_mod = 0, time_dep = 1, rand_eff_corr=0, block_diag_rand_eff = 0, Data = Data, plot = 1)
 
 
 ############################################## 
@@ -818,5 +868,539 @@ inits3 <- function(){
       .Dim = c(10, 4))
   )
 }
+
+
+############################################## 
+### rstan
+##############################################
+
+
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores())
+
+
+####################
+### IMPORT SWISSRE DATA
+####################
+
+# VERSION 2
+
+# Libraries
+
+path_data <- "C:/...."
+
+# Choose between "prop", "liab", "motor"
+portfolio <- "liab"
+
+# Choose between "Property", "Liability - Prop & Direct", "Motor - Prop & Direct Reinsura"
+sheetname <- "Liability - Prop & Direct"
+
+#### Rectangle Cumulative ####
+# Incurred 
+dat_rect_inc <- read_excel(path = paste(path_data, "/2019-loss-ratio-development-doc.xlsx", sep = ""), 
+                           sheet = sheetname, 
+                           range = anchored("H11", dim =c(9,8), col_names = FALSE))
+
+# Paid 
+dat_rect_paid<- read_excel(path = paste(path_data, "/2019-loss-ratio-development-doc.xlsx", sep = ""), 
+                           sheet = sheetname, 
+                           range = anchored("H30", dim =c(9,8), col_names = FALSE))
+
+# Oustanding
+dat_rect_out <- dat_rect_inc - dat_rect_paid
+
+# Premium
+prem <- read_excel(path = paste(path_data, "/2019-loss-ratio-development-doc.xlsx", sep = ""), 
+                   sheet = sheetname, 
+                   range = anchored("F11", dim =c(9,1), col_names = FALSE))
+
+# Outstanding + Paid
+dat_rect <- data.frame(accident_year = rep(c(2004:2011), 2),
+                       rbind(dat_rect_out, dat_rect_paid),
+                       type = c(rep("OS",nrow(dat_rect_out)), rep("Paid", nrow(dat_rect_paid))), 
+                       premium = prem)
+
+names(dat_rect) <- c("accident_year" , c(1:8), "type", "premium")
+
+dat_rect_long_OS = dat_rect_long[dat_rect_long$type == "OS",]
+dat_rect_long_Paid = dat_rect_long[dat_rect_long$type == "Paid",]
+
+# Transform from wide to long
+dat_rect_long <- dat_rect %>%
+  pivot_longer(cols = c(2:9),
+               names_to = "dev", 
+               values_to = "loss_ratio") %>%
+  mutate(dev = as.integer(dev))
+
+
+
+# Visualization
+dat_rect_long %>%
+  ggplot(mapping = aes( x = dev, 
+                        y = loss_ratio, 
+                        col = factor(type), 
+                        shape = testf))+
+  facet_wrap(~accident_year)+
+  geom_line()+
+  geom_point()
+
+####################
+### ONE TANK WITH ODE
+####################
+
+
+myFuns <- "
+real[] ode_lossemergence(real t, real [] y, real [] theta,
+real [] x_r, int[] x_i){
+real dydt[3];
+real ke = theta[1];
+real dr = theta[2];
+real kp1 = theta[3];
+real kp2 = theta[4];
+dydt[1] = pow(ke, dr) * pow(t, dr - 1) * exp(-t * ke)/tgamma(dr)
+- (kp1 + kp2) * y[1];
+dydt[2] = kp2 * (y[1] - y[2]);
+dydt[3] = (kp1 * y[1] + kp2 * y[2]);
+return dydt;
+}
+real int_lossemergence(real t, real ke, real dr,
+real kp1, real kp2){
+real y0[3]; real y[1, 3]; real theta[4];
+y0[1] = 0; y0[2] = 0; y0[3] = 0;
+theta[1] = ke;
+theta[2] = dr;
+theta[3] = kp1;
+theta[4] = kp2;
+y = integrate_ode_rk45(ode_lossemergence,
+y0, 0, rep_array(t, 1), theta,
+rep_array(0.0, 0), rep_array(1, 1),
+0.0001, 0.0001, 500); // tolerances, steps
+return (y[1, 3]);
+}
+real lossemergence(real t, real devfreq, real ke, real dr,
+real kp1, real kp2){
+real out = int_lossemergence(t, ke, dr, kp1, kp2);
+if(t > devfreq){ // paid greater dev period 1
+// incremental paid
+out = out - int_lossemergence(t - devfreq, ke, dr, kp1, kp2);
+}
+return(out);
+}
+"
+
+frml <- bf(loss_ratio ~ eta, # incremental prediction von paid loss ratio 
+           nlf(eta ~ log(ELR * lossemergence(dev, 1.0, ke, dr, kp1, kp2))), nlf(ke ~ exp(oke * 0.5)),
+           nlf(dr ~ 1 + 0.1 * exp(odr * 0.5)),
+           nlf(kp1 ~ 0.5 * exp(okp1 * 0.5)),
+           nlf(kp2 ~ 0.1 * exp(okp2 * 0.5)),
+           ELR ~ 1 + (1 | accident_year),
+           oke ~ 1 + (1 | accident_year),
+           odr ~ 1 + (1 | accident_year),
+           okp1 ~ 1 + (1 | accident_year),
+           okp2 ~ 1 + (1 | accident_year), 
+           nl = TRUE)
+
+
+
+mypriors <- c(prior(inv_gamma(4, 2), nlpar = "ELR", lb=0), prior(normal(0, 1), nlpar = "oke"),
+              prior(normal(0, 1), nlpar = "odr"),
+              prior(normal(0, 1), nlpar = "okp1"),
+              prior(normal(0, 1), nlpar = "okp2"), 
+              prior(student_t(10, 0, 0.1), class = "sd", nlpar = "ELR"), 
+              prior(student_t(10, 0, 0.1), class = "sd", nlpar = "oke"), 
+              prior(student_t(10, 0, 0.1), class = "sd", nlpar = "odr"), 
+              prior(student_t(10, 0, 0.1), class = "sd", nlpar = "okp1"), 
+              prior(student_t(10, 0, 0.1), class = "sd", nlpar = "okp2"), 
+              prior(student_t(10, 0, 1), class = "sigma")) 
+
+fit_loss <- brm(frml, prior = mypriors, # prediction for incr_lr
+                data = dat_rect_long_Paid, 
+                family = lognormal(), 
+                seed = 12345, 
+                stanvars = stanvar(scode = myFuns, block = "functions"),
+                control = list(adapt_delta = 0.9, max_treedepth=7), iter = 1000, chains = 2)
+
+fit_loss
+
+x <- posterior_samples(fit_loss, "^b")
+mySummary <- function(x){
+  c(Estimate = mean(x), Est.Error = sd(x),
+    `l-95% CI` = as.numeric(quantile(x, probs = 0.025)),
+    `u-95% CI` = as.numeric(quantile(x, probs = 0.975)))
+}
+
+estims = rbind(
+  ELR = mySummary(x[, 'b_ELR_Intercept']),
+  ke = mySummary(exp(x[, 'b_oke_Intercept'] * 0.5)),
+  dr = mySummary(1 + 0.1 * exp(x[, 'b_odr_Intercept'] * 0.5)),
+  kp1 = mySummary(0.5 * exp(x[, 'b_okp1_Intercept'] * 0.5)),
+  kp2 = mySummary(0.1 * exp(x[, 'b_okp2_Intercept'] * 0.5))
+)
+estims
+
+
+
+expose_functions(fit_loss, vectorize = TRUE)
+
+fit_loss_pred <- predict(fit_loss, newdata = dat_rect_long_Paid, method="predict")
+fit_loss_pred_all <- cbind(dat_rect_long_Paid, fit_loss_pred)
+
+
+xyplot(Q2.5 + Q97.5 + loss_ratio + Estimate ~ 
+         dev | factor(accident_year), 
+       data=fit_loss_pred_all, layout = c(4,2),
+       ylab = "Paid Loss Ratio",
+       xlab = "Devolopment year",
+       par.settings = list(strip.background=list(col="#CBDDE6")),
+       scales=list(alternating=1),
+       as.table=TRUE, type = "l", col = c("grey","grey",2,4), lwd = c(0.5 , 0.5, 2,2),
+       main = "Paid Loss Ratio"
+)
+
+################# now OS
+
+
+
+fit_loss_OS <- brm(frml, prior = mypriors, # prediction for incr_lr
+                   data = dat_rect_long_OS, 
+                   family = lognormal(), 
+                   seed = 12345, 
+                   stanvars = stanvar(scode = myFuns, block = "functions"),
+                   control = list(adapt_delta = 0.9, max_treedepth=7), iter = 1000, chains = 2)
+
+fit_loss_OS
+
+x <- posterior_samples(fit_loss_OS, "^b")
+mySummary <- function(x){
+  c(Estimate = mean(x), Est.Error = sd(x),
+    `l-95% CI` = as.numeric(quantile(x, probs = 0.025)),
+    `u-95% CI` = as.numeric(quantile(x, probs = 0.975)))
+}
+
+estims_OS = rbind(
+  ELR = mySummary(x[, 'b_ELR_Intercept']),
+  ke = mySummary(exp(x[, 'b_oke_Intercept'] * 0.5)),
+  dr = mySummary(1 + 0.1 * exp(x[, 'b_odr_Intercept'] * 0.5)),
+  kp1 = mySummary(0.5 * exp(x[, 'b_okp1_Intercept'] * 0.5)),
+  kp2 = mySummary(0.1 * exp(x[, 'b_okp2_Intercept'] * 0.5))
+)
+estims_OS
+
+
+
+expose_functions(fit_loss_OS, vectorize = TRUE)
+
+fit_loss_pred_OS <- predict(fit_loss_OS, newdata = dat_rect_long_OS, method="predict")
+fit_loss_pred_all_OS <- cbind(dat_rect_long_OS, fit_loss_pred_OS)
+
+
+xyplot(Q2.5 + Q97.5 + loss_ratio + Estimate ~ 
+         dev | factor(accident_year), 
+       data=fit_loss_pred_all_OS, layout = c(4,2),
+       ylab = "OS Loss Ratio",
+       xlab = "Devolopment year",
+       par.settings = list(strip.background=list(col="#CBDDE6")),
+       scales=list(alternating=1),
+       as.table=TRUE, type = "l", col = c("grey","grey",2,4), lwd = c(0.5 , 0.5, 2,2),
+       main = "OS Loss Ratio"
+)
+
+
+####################
+### ANALYTICAL SOLUTION OF TWO TANKS - CAS Data
+####################
+
+
+CASdata <- read.csv("C:/.../wkcomp_pos.csv",header=TRUE)
+
+
+CASdata <- as.data.table(CASdata)
+
+createLossData2 <- function(CASdata, company_code){
+  compData <- CASdata[GRCODE==company_code,
+                      c("EarnedPremDIR_D", "AccidentYear", "DevelopmentLag", 
+                        "IncurLoss_D", "CumPaidLoss_D", "BulkLoss_D")]
+  setnames(compData, names(compData),
+           c("premium", "accident_year", "dev",
+             "incurred_loss", "paid_loss", "bulk_loss"))
+  compData <- as.data.table(compData)
+  compData <- compData[, `:=`(origin = accident_year - min(accident_year) + 1)]
+  compData0 <- compData[dev==1]
+  compData0 <- compData0[, `:=`(dev = 0, incurred_loss = 0,
+                                paid_loss = 0, bulk_loss = 0)]
+  compData <- rbindlist(list(compData0, compData))
+  compData <- compData[, cal := origin + dev - 1][order(origin, dev)] # neue Spalte und ordnen nach origin, dann dev
+  compData <- compData[, `:=`(
+    paid_train = ifelse(cal <= max(origin), paid_loss, NA),
+    paid_test = ifelse(cal > max(origin), paid_loss, NA),
+    os_train = ifelse(cal <= max(origin), incurred_loss - paid_loss, NA),
+    os_test = ifelse(cal > max(origin), incurred_loss - paid_loss, NA))]
+  traintest <- rbindlist(list(compData[cal <= max(origin)],
+                              compData[cal > max(origin)]))
+  return(traintest)
+}
+lossData <- createLossData2(CASdata, company_code = 337)
+
+########################### ------ Plot
+
+
+key <- list(
+  rep=FALSE, 
+  lines=list(col=c("#00526D", "purple"), 
+             type=c("p", "p"), 
+             pch=c(19, 19)),
+  text=list(lab=c("Paid observation","OS observation"))) 
+
+xyplot(paid_loss + os_train ~  
+         dev | factor(accident_year), data=lossData, t = c("b", "b"), 
+       pch=c(19, 19),
+       as.table=TRUE,
+       xlab="Development Year",
+       ylab="Loss ratio (%)",
+       main="Paid & OS claims developments by accident year",
+       sub=paste("Data source: CAS Loss Reserving Database,",
+                 "Workers' Comp 337.",
+                 337),
+       scales=list(alternating=1), layout=c(5,2), key=key,
+       par.settings = list(strip.background=list(col="#CBDDE6")),
+       par.strip.text = list(font = 2))
+
+########################## ------ 
+
+
+lossData0 <- 
+  rbindlist(
+    list(lossData[, list(accident_year, dev, loss_train=os_train, 
+                         loss_test=os_test, delta=0, premium=premium)],
+         lossData[,list(accident_year, dev,loss_train=paid_train, 
+                        loss_test=paid_test, delta=1, premium=premium)]
+    ))[order(accident_year, dev)]
+
+premind <- lossData0[accident_year==min(accident_year) & dev==min(dev) & delta==1, premium]
+lossData0 <- lossData0[, `:=`(premium = premium/premind,
+                              loss_train = loss_train/premind,
+                              loss_test = loss_test/premind,
+                              deltaf = factor(delta, labels = c("os", "paid")),
+                              cal=accident_year + dev - 1)][dev>0]
+
+### ANALYTICAL SOLUTION TWO TANKS
+
+my.f <- function(t, premium, lk_er,  lk_p_1, lk_p_2, lRLR, lRRF, delta){
+  k_er <- exp(lk_er)  
+  k_p_1 <- exp(lk_p_1)
+  k_p_2 <- exp(lk_p_2)
+  RLR <- exp(lRLR) 
+  RRF <- exp(lRRF)
+  
+  os_1 <- ((RLR * k_er) / (k_er - k_p_1 - k_p_2) * (exp(-(k_p_1 + k_p_2) * t) - exp(-k_er * t)))
+  
+  os_2 <- ((RLR * k_er * k_p_2) / (k_p_1* (k_p_2 - k_er) * (k_er - k_p_1 - k_p_2))) * (
+    exp(-(k_p_1 + k_p_2)*t) * (k_er - k_p_2) - exp(-k_p_2 * t)*(k_er - k_p_1 - k_p_2) - 
+      exp(-k_er * t) * k_p_1)
+  
+  paid <- ((RLR * RRF) / (k_p_1 * (k_p_2 - k_er) * (k_er - k_p_1 - k_p_2)) * 
+             ((k_p_1 * (k_er * (k_p_1 - k_er) - k_p_2 * (k_p_1 + k_p_2)) + 2*k_er*k_p_2) +
+                exp(-(k_p_1 + k_p_2)*t) * (k_er * (k_er * k_p_1 - k_er*k_p_2 + (k_p_2^2) - k_p_1*k_p_2)) +
+                exp(-k_p_2 * t) * (k_er * k_p_2*(k_er - k_p_1 - k_p_2)) +
+                exp(-k_er * t) * (k_p_1 * (k_p_1* k_p_2 + (k_p_2^2) - k_er*k_p_1)))
+  )
+  
+  return(premium * ((os_1 + os_2) * (1 - delta) + paid * delta))
+}
+
+n1 <- nls(loss_train ~ my.f(dev, premium, # nls = Nonlinear Least Squares
+                            lk_er=lker, lk_p_1 = lkp1,lk_p_2 = lkp2, 
+                            lRLR=lRLR, lRRF=lRRF, delta=delta),
+          data=lossData0[cal<=max(accident_year)],
+          start = c(lker = log(1.5), lRLR = log(1),
+                    lkp1 = log(0.75),lkp2 = log(0.05), lRRF = log(0.75)))
+n1
+
+
+n1par <- data.table(summary(n1)$coefficients)[, exp(Estimate + 0.5*`Std. Error`^2)]
+names(n1par) <- c("ker", "RLR", "kp1", "kp2", "RRF")
+n1par
+
+m1 <- nlme(loss_train ~ my.f(dev, premium,
+                             lk_er=lker, lk_p_1=lkp1, lk_p_2 = lkp2, 
+                             lRLR=lRLR, lRRF=lRRF, delta=delta),
+           data=lossData0[cal<=max(accident_year)],
+           fixed = lker + lRLR + lkp1 + lkp2 + lRRF ~ 1,
+           random = pdDiag(lRLR + lRRF ~ 1),
+           groups = ~ accident_year,
+           weights = varIdent(form = ~ 1 | deltaf),
+           start = c(lker = log(1.5), lRLR = log(1),
+                     lkp1 = log(0.75),lkp2 = log(0.05), lRRF = log(0.75)),
+           control=list(msMaxIter=10000, pnlsMaxIter=10000,pnlsTol=0.4)) 
+summary(m1)
+
+
+
+m1_fe <- data.table(summary(m1)$tTable)[, exp(Value + 0.5*`Std.Error`^2)]
+names(m1_fe) <- c("ker", "RLR", "kp1","kp2", "RRF")
+m1_fe
+
+
+RLRRRF <- coef(m1)[,c(2,4)]
+names(RLRRRF) <- c("RLR", "RRF")
+round(exp(cbind(RLRRRF, ULR=apply(RLRRRF,1,sum))),3)
+
+(sig_delta <- sapply(split(resid(m1), lossData0[cal<=max(accident_year)]$deltaf), sd))
+
+VarCorr(m1)
+
+
+############################ BAYES
+curve(dgamma(x, 4, 5), from = 0, 5, main="Gamma priors",xlab="", ylab="", bty="n", col = 1) # RLR/RRF
+curve(dgamma(x, 3, 2), add = TRUE, lty=3, col = 2) #k_er
+curve(dgamma(x, 3, 4), add=TRUE, lty=5, col = 3) #k_p1
+curve(dgamma(x, 5, 4), add=TRUE, lty=6, col = 4) #k_p2
+text(x = c(3,3,3,3), y = c(1,0.8,0.6,0.4), labels = c( "RLR,RRF", "k_er", "k_p1", "k_p2"), col = c(1,2,3,4))
+
+
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores())
+
+
+fml2t <- 
+  loss_train ~ premium * (
+    (((RLR * ker) / (ker - kp1 - kp2) * (exp(-(kp1 + kp2) * dev) - exp(-ker * dev))) +
+       (((RLR * ker * kp2) / (kp1* (kp2 - ker) * (ker - kp1 - kp2))) * (
+         exp(-(kp1 + kp2)*dev) * (ker - kp2) - exp(-kp2 * dev)*(ker - kp1 - kp2) - 
+           exp(-ker * dev) * kp1))) * (1 - delta) + 
+      ((RLR * RRF) / (kp1 * (kp2 - ker) * (ker - kp1 - kp2)) * 
+         ((kp1 * (ker * (kp1 - ker) - kp2 * (kp1 + kp2)) + 2*ker*kp2) +
+            exp(-(kp1 + kp2)*dev) * (ker * (ker * kp1 - ker*kp2 + (kp2^2) - kp1*kp2)) +
+            exp(-kp2 * dev) * (ker * kp2*(ker - kp1 - kp2)) +
+            exp(-ker * dev) * (kp1 * (kp1* kp2 + (kp2^2) - ker*kp1)))) * delta
+  ) 
+
+b2 <- brm(bf(fml2t,
+             RLR ~ 1 + (1 | accident_year),
+             RRF ~ 1 + (1 | accident_year),
+             ker ~ 1,
+             kp1 ~ 1,
+             kp2 ~ 1,
+             sigma ~ 0 + deltaf,
+             nl = TRUE),
+          data = lossData0[cal <= max(accident_year)], 
+          family = brmsfamily("gaussian", link_sigma = "log"),
+          prior = c(prior(gamma(4, 5), nlpar = "RLR", lb=0),
+                    prior(gamma(4, 5), nlpar = "RRF", lb=0),
+                    prior(gamma(3, 2), nlpar = "ker", lb=0),
+                    prior(gamma(3, 4), nlpar = "kp1", lb=0),
+                    prior(gamma(5, 4), nlpar = "kp2", lb=0)),
+          control = list(adapt_delta = 0.999, max_treedepth=15), # 15
+          seed = 1234, iter = 1000) # 1000
+
+b2
+summary(b2)
+b2$fit
+
+X <- extract(b2$fit)
+(sig_delta_brm <- apply(X$b_sigma, 2, function(x) exp(mean(x)+0.5*var(x))))
+
+
+plot(b2, N = 4, ask = FALSE)
+
+
+
+RLR <- sweep(X$r_1_RLR_1, 1, X$b_RLR, "+")
+RRF <- sweep(X$r_2_RRF_1, 1, X$b_RRF, "+")
+ULR <- t(apply(RLR * RRF, 2, quantile, c(0.025, 0.5, 0.975)))
+matplot(unique(lossData0$accident_year), ULR*100, 
+        t="l", ylim=c(0, 150), lty=1, col=c(1,2,4), bty="n", 
+        ylab="Projected ULR (%)", xlab="Accident year")
+legend("topleft", legend = c("2.5%ile","50%ile", "97.5%ile"),
+       lty=1, col=c(1,2,4), bty="n")
+baseULR <- X$b_RLR * X$b_RRF
+abline(h=quantile(baseULR, 0.025)*100, col=1, lty=3)
+abline(h=median(baseULR)*100, col=2, lty=3)
+abline(h=quantile(baseULR, 0.975)*100, col=4, lty=3)
+
+###### Plot Functions
+
+createPlotData <- function(stanfit, data, probs=c(0.25, 0.975)){
+  
+  ppc_loss <- as.matrix(extract(stanfit, "ppc_loss")$ppc_loss)
+  ppc_loss_summary <- cbind(
+    mean=apply(ppc_loss, 2, mean),
+    t(apply(ppc_loss, 2, quantile, probs=probs))
+  )
+  colnames(ppc_loss_summary) = c(
+    "Y_pred_mean",
+    paste0("Y_pred_cred", gsub("\\.", "", probs[1])),
+    paste0("Y_pred_cred", gsub("\\.", "", probs[2])))
+  
+  return(cbind(ppc_loss_summary, data))
+}
+
+plotDevBananas <- function(x, data, company_code,
+                           xlab="Development year", 
+                           ylab="Reported incurred loss ($k)", 
+                           main="Correlated Log-normal Chain Ladder Model"){
+  key <- list(
+    rep=FALSE, 
+    lines=list(col=c("#00526D", "#00526D", "purple"), 
+               type=c("p", "p", "l"), 
+               pch=c(19, 1, NA)),
+    text=list(lab=c("Observation", "Hold out observation", "Mean estimate")),
+    rectangles = list(col=adjustcolor("yellow", alpha.f=0.5), border="grey"),
+    text=list(lab="95% Posterior prediction interval"))
+  
+  xyplot(x, data=data,as.table=TRUE,xlab=xlab, ylab=ylab, main=main,
+         sub=paste("Data source: CAS Loss Reserving Database,",
+                   "Comm. Auto, Comp.",
+                   company_code),
+         scales=list(alternating=1), layout=c(5,2), key=key,
+         par.settings = list(strip.background=list(col="#CBDDE6")),
+         par.strip.text = list(font = 2),
+         panel=function(x, y){
+           n <- length(x)
+           divisor <- 5
+           cn <- c(1:(n/divisor))
+           upper <- y[cn+n/divisor*0]
+           lower <- y[cn+n/divisor*1]
+           x <- x[cn]
+           panel.polygon(c(x, rev(x)), c(upper, rev(lower)),
+                         col = adjustcolor("yellow", alpha.f = 0.5), 
+                         border = "grey")
+           panel.lines(x, y[cn+n/divisor*2], col="purple")
+           panel.points(x, y[cn+n/divisor*4], lwd=1, col="#00526D")
+           panel.points(x, y[cn+n/divisor*3], lwd=1, pch=19, col="#00526D")
+         })
+}
+
+predClaimsPred <- predict(b2, newdata = lossData0, method="predict")
+plotDevBananas(`Q2.5`/premium*100 + `Q97.5`/premium*100 + 
+                 Estimate/premium*100 + loss_train/premium*100 + 
+                 loss_test/premium*100 ~ 
+                 dev | factor(accident_year), company_code = 337,
+               data=cbind(lossData0, predClaimsPred)[delta==0], 
+               main="Outstanding claims developments", 
+               ylab="Outstanding loss ratio (%)")
+
+
+
+plotDevBananas(`Q2.5`/premium*100 + `Q97.5`/premium*100 + 
+                 Estimate/premium*100 + loss_train/premium*100 + 
+                 loss_test/premium*100 ~  
+                 dev | factor(accident_year),company_code = 337,
+               data=cbind(lossData0, predClaimsPred)[delta==1], 
+               main="Paid claims developments", 
+               ylab="Paid loss ratio (%)")
+
+# Calculation time
+# > 4888/60
+# [1] 81.46667 Minutes
+
+
+
+
+
+
+
+
+
 
 
