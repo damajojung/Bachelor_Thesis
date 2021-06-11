@@ -866,7 +866,7 @@ inits3 <- function(){
 
 
 ############################################## 
-### rstan - MORRIS 2016 PAPER
+### rstan - MORRIS GESMANN 2020 PAPER
 ##############################################
 
 # rstan models is implemented with wkcomp data
